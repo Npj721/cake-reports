@@ -94,4 +94,8 @@ return [
             'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
         ],
     ],
+
+    'LibreOffice' => [
+        'binaryPath' => env('LIBREOFFICE_BINARY_PATH', null),
+    ],
 ];

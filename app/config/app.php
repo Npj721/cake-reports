@@ -461,4 +461,7 @@ return [
         'errorLevel' => null,
         'fixtureStrategy' => null,
     ],
+    'LibreOffice' => [
+        'binaryPath' => env('LIBREOFFICE_BINARY_PATH', null),
+    ],
 ];
