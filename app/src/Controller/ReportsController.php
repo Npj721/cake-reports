@@ -9,18 +9,34 @@ use App\Service\PdfConverterService;
 use Cake\Core\Configure;
 use RuntimeException;
 
-class ReportsController extends AppDBController
+class ReportsController extends AppController
 {
     private const TEMPLATE_PATH = ROOT . DS . 'templates_excel' . DS;
 
-    public function generate($templateName, $jsonData, $options = [])
+    public function generate()
     {
         $this->autoRender = false;
-        $exportType = $options['type'] ?? 'PDF';
 
+        $data = $this->request->getData();
+
+        $templateName = $data['templateName'] ?? null;
+        $jsonData = $data['jsonData'] ?? [];
+        $options = $data['options'] ?? [];
+
+        if (empty($templateName)) {
+            return $this->response
+                ->withStatus(400)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => 'Le paramètre "templateName" est obligatoire.'], JSON_UNESCAPED_UNICODE));
+        }
+
+        $exportType = strtoupper($options['type'] ?? 'PDF');
         $templateFile = self::TEMPLATE_PATH . $templateName;
         if (!file_exists($templateFile)) {
-            return $this->response->withStatus(404)->withStringBody("Le Template $templateName n'a pas ete trouve.");
+            return $this->response
+                ->withStatus(404)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => "Le template '$templateName' n'a pas été trouvé."], JSON_UNESCAPED_UNICODE));
         }
 
         try {
@@ -34,7 +50,12 @@ class ReportsController extends AppDBController
                     if (isset($sheetData['renderers'])) {
                         $sheetOptions['renderers'] = $sheetData['renderers'];
                     }
-                    $generator->processSheet($sheet, $sheetData['variables'] ?? [], $sheetData['arrays'] ?? [], $sheetOptions);
+                    $generator->processSheet(
+                        $sheet, 
+                        $sheetData['variables'] ?? [], 
+                        $sheetData['arrays'] ?? [], 
+                        $sheetOptions
+                    );
                 }
             }
 
@@ -56,10 +77,8 @@ class ReportsController extends AppDBController
             }
 
             if ($exportType === 'PDF') {
-                // Lecture de la config CakePHP et injection dans le service
                 $configuredPath = Configure::read('LibreOffice.binaryPath');
                 $converter = new PdfConverterService($configuredPath);
-                
                 $pdfPath = $converter->convert($xlsxPath, TMP);
 
                 return $this->response
@@ -68,11 +87,16 @@ class ReportsController extends AppDBController
                     ->withFile($pdfPath);
             }
 
-            return $this->response->withStatus(400)->withStringBody("Type d'export non supporte.");
+            return $this->response
+                ->withStatus(400)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => "Type d'export non supporté. Utilisez 'PDF' ou 'EXCEL'."], JSON_UNESCAPED_UNICODE));
 
         } catch (RuntimeException $e) {
-            // Log::error('Erreur export : ' . $e->getMessage());
-            return $this->response->withStatus(500)->withStringBody("Erreur lors de la generation : " . $e->getMessage());
+            return $this->response
+                ->withStatus(500)
+                ->withType('application/json')
+                ->withStringBody(json_encode(['error' => 'Erreur lors de la génération : ' . $e->getMessage()], JSON_UNESCAPED_UNICODE));
         }
     }
 }
