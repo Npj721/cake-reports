@@ -100,4 +100,40 @@ class ExcelReportGenerator
             }
         }
     }
+
+
+    /**
+     * Génère un fichier Excel à partir d'un template.
+     *
+     * @param string $templateName Nom du template XLSX.
+     * @param array $variables Variables à remplacer.
+     * @param string $outputPath Chemin complet du fichier généré.
+     *
+     * @return string Chemin du fichier généré.
+     */
+    public function generateXlsx(
+        string $templateName,
+        array $variables,
+        string $outputPath
+    ): string {
+        $spreadsheet = $this->loadTemplate($templateName);
+
+        $this->replaceVariables($spreadsheet, $variables);
+
+        $outputDirectory = dirname($outputPath);
+
+        if (!is_dir($outputDirectory)) {
+            throw new RuntimeException(
+                sprintf('Le dossier de destination n’existe pas : %s', $outputDirectory)
+            );
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->setIncludeCharts(true);
+        $writer->save($outputPath);
+
+        $spreadsheet->disconnectWorksheets();
+
+        return $outputPath;
+    }
 }
