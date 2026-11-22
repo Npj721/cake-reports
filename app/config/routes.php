@@ -30,7 +30,7 @@ use Cake\Routing\RouteBuilder;
  * if required.
  */
 return function (RouteBuilder $routes): void {
-    /*
+ /*
      * The default class to use for all routes
      *
      * The following route classes are supplied with CakePHP and are appropriate
@@ -62,6 +62,12 @@ return function (RouteBuilder $routes): void {
          */
         $builder->connect('/pages/*', 'Pages::display');
 
+        $builder->connect(
+            '/reports/generate',
+            ['controller' => 'Reports', 'action' => 'generate'],
+            ['_method' => 'POST']
+        );
+
         /*
          * Connect catchall routes for all controllers.
          *
@@ -78,7 +84,7 @@ return function (RouteBuilder $routes): void {
         $builder->fallbacks();
     });
 
-    /*
+ /*
      * If you need a different set of middleware or none at all,
      * open new scope and define routes there.
      *
