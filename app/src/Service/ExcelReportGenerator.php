@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -43,5 +44,60 @@ class ExcelReportGenerator
         $reader->setIncludeCharts(true);
 
         return $reader->load($templatePath);
+    }
+
+
+    /**
+     * Remplace les variables {{variable}} dans toutes les cellules du classeur.
+     */
+    public function replaceVariables(
+        Spreadsheet $spreadsheet,
+        array $variables
+    ): void {
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            foreach ($sheet->getRowIterator() as $row) {
+                foreach ($row->getCellIterator() as $cell) {
+                    $value = $cell->getValue();
+
+                    if (!is_string($value) || !str_contains($value, '{{')) {
+                        continue;
+                    }
+
+                    $newValue = preg_replace_callback(
+                        '/\{\{([a-zA-Z0-9_.-]+)\}\}/',
+                        function (array $matches) use ($variables): string {
+                            $key = $matches[1];
+
+                            if (!array_key_exists($key, $variables)) {
+                                return $matches[0];
+                            }
+
+                            $value = $variables[$key];
+
+                            if ($value === null) {
+                                return '';
+                            }
+
+                            if (is_bool($value)) {
+                                return $value ? '1' : '0';
+                            }
+
+                            if (is_scalar($value)) {
+                                return (string)$value;
+                            }
+
+                            throw new RuntimeException(
+                                sprintf('La variable "%s" doit être scalaire.', $key)
+                            );
+                        },
+                        $value
+                    );
+
+                    if ($newValue !== $value) {
+                        $cell->setValue($newValue);
+                    }
+                }
+            }
+        }
     }
 }
