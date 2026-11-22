@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\ExcelReportGenerator;
-use App\Service\PdfConverterService;
-use Cake\Core\Configure;
+use App\Service\Pdf\PdfConverterGateway;
 use RuntimeException;
 
 class ReportsController extends AppController
@@ -77,9 +76,8 @@ class ReportsController extends AppController
             }
 
             if ($exportType === 'PDF') {
-                $configuredPath = Configure::read('LibreOffice.binaryPath');
-                $converter = new PdfConverterService($configuredPath);
-                $pdfPath = $converter->convert($xlsxPath, TMP);
+                $gateway = PdfConverterGateway::fromConfig();
+                $pdfPath = $gateway->convert($xlsxPath, TMP);
 
                 return $this->response
                     ->withType('application/pdf')

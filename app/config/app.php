@@ -464,4 +464,13 @@ return [
     'LibreOffice' => [
         'binaryPath' => env('LIBREOFFICE_BINARY_PATH', null),
     ],
+    'Gotenberg' => [
+        'enabled' => filter_var(env('GOTENBERG_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'url'     => env('GOTENBERG_URL', null),
+        'timeout' => (int)env('GOTENBERG_TIMEOUT', 30),
+    ],
+     'Pdf' => [
+        // Ordre de fallback. 'gotenberg' d'abord, puis 'libreoffice' local.
+        'strategies' => explode(',', env('PDF_STRATEGIES', 'gotenberg,libreoffice')),
+    ],
 ];
